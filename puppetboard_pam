@@ -1,0 +1,14 @@
+# Restrict access to ocfstaff users only, because we don't want the general
+# public to be able to see everything about puppet including failures which
+# could contain passwords, etc.
+#
+# Note that this PAM service is used only for authentication to the nginx
+# proxy, puppetboard is just running as a simple upstream that nginx proxies to
+
+@include common-auth
+@include common-account
+@include common-password
+@include common-session
+
+# Must be in the ocfstaff group to access
+auth    required    pam_listfile.so onerr=fail item=group sense=allow file=/opt/puppetboard/allowed-groups
