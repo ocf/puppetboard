@@ -46,7 +46,7 @@ try {
 
                 stage('deploy-to-prod') {
                     build job: 'marathon-deploy-app', parameters: [
-                        [$class: 'StringParameterValue', name: 'app', value: 'metabase'],
+                        [$class: 'StringParameterValue', name: 'app', value: 'puppetboard'],
                         [$class: 'StringParameterValue', name: 'version', value: version],
                     ]
                 }
