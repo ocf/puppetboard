@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service
+spec:
+  selector:
+    app: puppetboard
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+  labels:
+    app: puppetboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: puppetboard
+  template:
+    metadata:
+      labels:
+        app: puppetboard
+    spec:
+      containers:
+        - name: puppetboard
+          image: "docker.ocf.berkeley.edu/puppetboard:<%= version %>"
+          resources:
+            limits:
+              memory: 2048Mi
+              cpu: 750m
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /opt/puppetboard/keys
+              name: secrets
+      volumes:
+        - name: secrets
+          hostPath:
+            path: /opt/share/kubernetes/secrets/puppetboard/keys
+            type: Directory
+      dnsPolicy: ClusterFirst
+      dnsConfig:
+        searches:
+          - ocf.berkeley.edu
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: virtual-host-ingress
+spec:
+  rules:
+    - host: puppet.ocf.berkeley.edu
+      http:
+        paths:
+          - backend:
+              serviceName: service
+              servicePort: 80
