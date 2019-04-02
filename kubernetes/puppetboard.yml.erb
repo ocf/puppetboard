@@ -33,10 +33,20 @@ spec:
               memory: 2048Mi
               cpu: 750m
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           volumeMounts:
             - mountPath: /opt/puppetboard/keys
               name: secrets
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
       volumes:
         - name: secrets
           hostPath:
