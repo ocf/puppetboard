@@ -1,4 +1,4 @@
-FROM docker.ocf.berkeley.edu/theocf/debian:stretch
+FROM docker.ocf.berkeley.edu/theocf/debian:buster
 ARG PUPPETBOARD_VERSION
 
 
@@ -31,7 +31,6 @@ COPY --chown=nobody:nogroup services /opt/puppetboard/services
 COPY --chown=nobody:nogroup settings.py /opt/puppetboard
 
 RUN virtualenv -ppython3 /opt/puppetboard/venv \
-    && /opt/puppetboard/venv/bin/pip install pip==9.0.1 \
     && /opt/puppetboard/venv/bin/pip install \
         -r /opt/puppetboard/requirements-docker.txt
 

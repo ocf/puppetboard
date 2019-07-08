@@ -1,5 +1,5 @@
 # Defaults are found in
-# https://github.com/voxpupuli/puppetboard/blob/v0.3.0/puppetboard/default_settings.py
+# https://github.com/voxpupuli/puppetboard/blob/v1.0.0/puppetboard/default_settings.py
 
 # PuppetDB connection variables
 PUPPETDB_HOST = 'puppetdb'
