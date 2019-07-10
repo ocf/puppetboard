@@ -38,12 +38,15 @@ spec:
             - mountPath: /opt/puppetboard/keys
               name: secrets
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /status
               port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 20
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 6
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /status
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 5
