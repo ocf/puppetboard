@@ -7,7 +7,7 @@ RANDOM_PORT := $(shell expr $$(( 8000 + (`id -u` % 1000) + 3 )))
 
 # Increment this when new releases are made at
 # https://github.com/voxpupuli/puppetboard/releases
-PB_VERSION := v1.0.0
+PB_VERSION := v2.0.0
 
 .PHONY: dev
 dev: cook-image
