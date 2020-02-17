@@ -37,7 +37,7 @@ spec:
             - --enable-default-deny=true
             - --enable-session-cookies
             - --listen=:8080
-            - --upstream-url=http://localhost:8000
+            - --upstream-url=http://127.0.0.1:8000
             - --resources=uri=/*|roles=ocfstaff
           env:
             - name: KEYCLOAK_SECRET
