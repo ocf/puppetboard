@@ -1,7 +1,0 @@
-#!/bin/bash
-
-set -euo pipefail
-exec 2>&1
-
-cd /opt/puppetboard
-exec /opt/puppetboard/venv/bin/gunicorn -b 127.0.0.1:8000 puppetboard.app:app
