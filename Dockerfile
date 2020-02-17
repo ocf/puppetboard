@@ -1,4 +1,4 @@
-FROM docker.ocf.berkeley.edu/theocf/debian:buster
+FROM debian:buster
 ARG PUPPETBOARD_VERSION
 
 
