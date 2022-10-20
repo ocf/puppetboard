@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: service
+  name: puppetboard
 spec:
   selector:
     app: puppetboard
@@ -12,7 +12,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deployment
+  name: puppetboard
   labels:
     app: puppetboard
 spec:
@@ -27,28 +27,89 @@ spec:
     spec:
       containers:
         - name: puppetboard
-          image: "docker.ocf.berkeley.edu/puppetboard:<%= version %>"
+          image: 'ghcr.io/voxpupuli/puppetboard:4.1.2'
+          env:
+            - name: PUPPETBOARD_PORT
+              value: '8001'
+            - name: PUPPETBOARD_HOST
+              value: '127.0.0.1'
+            - name: PUPPETDB_HOST
+              value: 'puppetdb'
+            - name: PUPPETDB_PORT
+              value: '8081'
+            - name: PUPPETDB_SSL_VERIFY
+              value: '/keys/ca.pem'
+            - name: PUPPETDB_KEY
+              value: '/keys/key.pem'
+            - name: PUPPETDB_CERT
+              value: '/keys/cert.pem'
+            - name: DEFAULT_ENVIRONMENT
+              value: '*'
+            - name: ENABLE_CATALOG
+              value: '*'
+            - name: LITTLE_TABLE_COUNT
+              value: '25'
+          volumeMounts:
+            - mountPath: /keys
+              name: pb-keys
           resources:
             limits:
               memory: 2048Mi
               cpu: 750m
-          ports:
-            - containerPort: 8080
-          volumeMounts:
-            - mountPath: /opt/puppetboard/keys
-              name: secrets
           livenessProbe:
-            tcpSocket:
-              port: 8080
+            httpGet:
+              port: http
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
-            tcpSocket:
-              port: 8080
+            httpGet:
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        - name: auth-proxy
+          image: 'quay.io/oauth2-proxy/oauth2-proxy:v7.3.0'
+          env:
+            - name: OAUTH2_PROXY_PROVIDER
+              value: 'keycloak-oidc'
+            - name: OAUTH2_PROXY_CLIENT_ID
+              value: 'puppetboard'
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-creds
+                  key: client-secret
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              value: 'https://puppet.ocf.berkeley.edu/_auth/callback'
+            - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+              value: 'https://auth.ocf.berkeley.edu/auth/realms/ocf'
+            - name: OAUTH2_PROXY_SESSION_STORE_TYPE
+              value: 'cookie'
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-creds
+                  key: cookie-secret
+            - name: OAUTH2_PROXY_ALLOWED_GROUPS
+              value: 'ocfstaff'
+          volumeMounts:
+            - mountPath: /keys
+              name: keys
+          resources:
+            limits:
+              memory: 2048Mi
+              cpu: 750m
+          livenessProbe:
+            httpGet:
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              port: http
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
-        - name: secrets
+        - name: pb-keys
           hostPath:
             path: /opt/share/kubernetes/secrets/puppetboard/keys
             type: Directory
@@ -60,7 +121,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: virtual-host-ingress
+  name: puppetboard
 spec:
   rules:
     - host: puppet.ocf.berkeley.edu
@@ -69,3 +130,12 @@ spec:
           - backend:
               serviceName: service
               servicePort: 80
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: oauth2-proxy-creds
+type: Opaque
+stringData:
+  client-secret: <%= oauth_client_secret %>
+  cookie-secret: <%= oauth2_proxy_cookie_secret %>
