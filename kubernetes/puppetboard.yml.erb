@@ -7,7 +7,7 @@ spec:
     app: puppetboard
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: http
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -69,6 +69,10 @@ spec:
         - name: auth-proxy
           image: 'quay.io/oauth2-proxy/oauth2-proxy:v7.3.0'
           env:
+            - name: OAUTH2_PROXY_HTTP_ADDRESS
+              value: ':8080'
+            - name: OAUTH2_PROXY_UPSTREAM
+              value: 'http://127.0.0.1:8001'
             - name: OAUTH2_PROXY_PROVIDER
               value: 'keycloak-oidc'
             - name: OAUTH2_PROXY_CLIENT_ID
@@ -91,13 +95,13 @@ spec:
                   key: cookie-secret
             - name: OAUTH2_PROXY_ALLOWED_GROUPS
               value: 'ocfstaff'
-          volumeMounts:
-            - mountPath: /keys
-              name: keys
+          ports:
+            - containerPort: 8080
+              name: http
           resources:
             limits:
-              memory: 2048Mi
-              cpu: 750m
+              memory: 256Mi
+              cpu: 500m
           livenessProbe:
             httpGet:
               port: http
