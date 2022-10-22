@@ -56,34 +56,26 @@ spec:
             limits:
               memory: 2048Mi
               cpu: 750m
-          livenessProbe:
-            httpGet:
-              port: http
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          readinessProbe:
-            httpGet:
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 5
         - name: auth-proxy
           image: 'quay.io/oauth2-proxy/oauth2-proxy:v7.3.0'
           env:
             - name: OAUTH2_PROXY_HTTP_ADDRESS
               value: ':8080'
-            - name: OAUTH2_PROXY_UPSTREAM
+            - name: OAUTH2_PROXY_UPSTREAMS
               value: 'http://127.0.0.1:8001'
+            - name: OAUTH2_PROXY_EMAIL_DOMAINS
+              value: 'ocf.berkeley.edu'
+            - name: OAUTH2_PROXY_ALLOWED_GROUPS
+              value: 'ocfstaff'
             - name: OAUTH2_PROXY_PROVIDER
               value: 'keycloak-oidc'
             - name: OAUTH2_PROXY_CLIENT_ID
               value: 'puppetboard'
-            - name: OAUTH2_PROXY_CLIENT_ID
+            - name: OAUTH2_PROXY_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: oauth2-proxy-creds
                   key: client-secret
-            - name: OAUTH2_PROXY_REDIRECT_URL
-              value: 'https://puppet.ocf.berkeley.edu/_auth/callback'
             - name: OAUTH2_PROXY_OIDC_ISSUER_URL
               value: 'https://auth.ocf.berkeley.edu/auth/realms/ocf'
             - name: OAUTH2_PROXY_SESSION_STORE_TYPE
@@ -93,8 +85,16 @@ spec:
                 secretKeyRef:
                   name: oauth2-proxy-creds
                   key: cookie-secret
-            - name: OAUTH2_PROXY_ALLOWED_GROUPS
-              value: 'ocfstaff'
+            - name: OAUTH2_PROXY_PROXY_PREFIX
+              value: '/_auth'
+            - name: OAUTH2_PROXY_PING_PATH
+              value: '/_ping'
+            - name: OAUTH2_PROXY_COOKIE_NAME
+              value: '__Host-_oauth2_proxy'
+            - name: OAUTH2_PROXY_SKIP_PROVIDER_BUTTON
+              value: 'true'
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              value: 'https://puppet.ocf.berkeley.edu/_auth/callback'
           ports:
             - containerPort: 8080
               name: http
@@ -105,11 +105,13 @@ spec:
           livenessProbe:
             httpGet:
               port: http
+              path: /_ping
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
               port: http
+              path: /_ping
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
@@ -132,7 +134,7 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: service
+              serviceName: puppetboard
               servicePort: 80
 ---
 apiVersion: v1
